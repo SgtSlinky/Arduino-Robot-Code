@@ -10,7 +10,7 @@ int pos = 0;    // variable to store the servo position
 void setup() {
   // put your setup code here, to run once:
 
-myservo.attach(2);  // attaches the servo on pin 2 to the servo object
+myservo.attach(0);  // attaches the servo on pin 0 to the servo object
   myservo.write(90);  // Center Servo
   delay(3000);        // Delay 3 seconds
 
