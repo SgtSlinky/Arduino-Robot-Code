@@ -1,0 +1,30 @@
+
+#include <Wire.h>
+#include <SparkFun_APDS9960.h>
+
+// Global Variables
+SparkFun_APDS9960 apds = SparkFun_APDS9960();
+uint8_t proximity_data = 0;
+
+void setup() {
+  
+                                                            
+  Serial.begin(9600);
+  
+  if ( apds.init() ) {
+  }
+  if ( !apds.setProximityGain(PGAIN_2X) ) {
+      }
+  if ( apds.enableProximitySensor(false) ) {
+  }
+}
+
+void loop() {
+  
+                                                             
+  if ( !apds.readProximity(proximity_data) ) {
+    } else {
+    Serial.println(proximity_data);
+  }
+  delay(200);
+}
