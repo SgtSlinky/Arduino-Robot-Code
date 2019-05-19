@@ -1,0 +1,222 @@
+#include <ENGG1500Lib.h>
+#include <Wire.h>
+#include <SparkFun_APDS9960.h>
+#define ENA 5                                                     //motor outputs
+#define ENB 6
+#define IN1 8
+#define IN2 9
+#define IN3 10
+#define IN4 11
+// These #define statements make the code more readable.
+// Instead of a pin number "7" or "12" we can write "ECHO" or "TRIG"
+#define ECHO 12
+#define TRIG 7
+SparkFun_APDS9960 apds = SparkFun_APDS9960();
+uint8_t proximity_data = 0;
+int dir = 0;
+void setup() {
+  //sensors
+  pinMode(A0,INPUT); // middle line sensor
+  pinMode(A1,INPUT); // left line sensor
+  pinMode(A2,INPUT); // right line sensor
+  pinMode(A3,INPUT); // servo
+  pinMode(A4,INPUT); //left front corner sensor
+  pinMode(A5,INPUT);  //right front corner sensor
+  //pinMode(A4,INPUT);
+  pinMode(ECHO,INPUT); //Initialise pin 12 as an input
+  pinMode(TRIG,OUTPUT); //Initialise pin 7 as an output
+  Serial.begin(9600); //begin serial communication
+//engine control
+  pinMode(5,OUTPUT); //set ENA as an output
+  pinMode(6,OUTPUT); //set ENB as an output
+  pinMode(8,OUTPUT); //set IN1 as an output
+  pinMode(9,OUTPUT); //set IN2 as an output
+  pinMode(10,OUTPUT); //set IN3 as an output
+  pinMode(11,OUTPUT); //set IN4 as an output
+  delay(2000);//delay before starting loop
+  enc_init(); //initialise encoders
+  // Initialize APDS-9960 (configure I2C and initial values)
+  if ( apds.init() ) {
+    Serial.println(F("APDS-9960 initialization complete"));
+  } else {
+    Serial.println(F("Something went wrong during APDS-9960 init!"));
+  }
+ 
+  // Adjust the Proximity sensor gain
+  if ( !apds.setProximityGain(PGAIN_2X) ) {
+    Serial.println(F("Something went wrong trying to set PGAIN"));
+  }
+ 
+  // Start running the APDS-9960 proximity sensor (no interrupts)
+  if ( apds.enableProximitySensor(false) ) {
+    Serial.println(F("Proximity sensor is now running"));
+  } else {
+    Serial.println(F("Something went wrong during sensor init!"));
+  }
+}
+int dir = 0;
+}
+void loop() {
+unsigned int mm = 0;
+mm = sonar_mm();
+unsigned float rgb = 0.0;
+rgb = apds.readProximity(proximity_data);
+delay(250); //maybe DELETE
+  // put your main code here, to run repeatedly:
+int right, midR, midL, left;
+  left = digitalRead(A0);
+  midL = digitalRead(A1);
+  midR = digitalRead(A2);
+  right = digitalRead(A3);
+ 
+int rightT = 1, leftT = 2, straight = 0;
+//put reasoning why sensors moved back in report
+if(mm < 200){
+  stoprobot();
+  Serial.print("Distance");
+  Serial.print(mm);
+  //delay(3);
+}
+if(rgb > 160){
+  stoprobot();
+  //Serial.print("Distance");
+  Serial.print(rgb);
+  //delay(3);
+}
+if(left == 1){
+  dir = leftT;
+ 
+}else if(right == 1){
+  dir = rightT;
+  //if mid 2 are on follow line
+  //on the right is on = right turn  because middle will be off
+}else if(midR == 1 || midL == 1){
+  dir = straight;
+ 
+}else{
+  dir = straight;
+}
+  //ok so some sensors need a 1 to detect line or a 0 it depends
+//6 is right 5 is left
+/*
+if(midR == 1 || midL == 1){
+  rightForwards();
+  leftForwards();
+  analogWrite(5, 100);
+  analogWrite(6, 100);
+  delay(1);
+} */
+/*
+if(midL == 1){
+  leftForwards();
+  rightForwards();
+  analogWrite(5, 110);
+  analogWrite(6, 70);
+ 
+}else if(midR == 1){
+  leftForwards();
+  rightForwards();
+  analogWrite(5, 70);
+  analogWrite(6, 110);
+  */
+ 
+ if(dir == leftT){
+  leftBackwards();
+  rightForwards();
+  analogWrite(5, 73);
+  analogWrite(6, 80);
+  delay(1);
+}
+else if(dir == rightT){
+  leftForwards();
+  rightBackwards();
+  analogWrite(5, 80);
+  analogWrite(6, 73);
+  delay(1);
+}else if(dir == straight){
+  rightForwards();
+  leftForwards();
+  analogWrite(5, 70);
+  analogWrite(6, 70);
+  delay(1);
+}
+else{
+  rightForwards();
+  leftForwards();
+  analogWrite(5, 70);
+  analogWrite(6, 70);
+  delay(1);
+}
+//if mid 2 detect go straight   === wrong
+//in the while if 2 mid are off midR and right   ===  wrong
+/*if(right == 1 && midR == 1 && midL == 1 && left == 1){
+  rightForwards();
+  leftForwards();
+  analogWrite(5, 1);
+  analogWrite(6, 1);
+  delay(1);
+}*/
+ 
+}//void loop
+  //motor control
+ void stoprobot(void)
+{
+ 
+  digitalWrite(8, LOW);
+  digitalWrite(9, LOW);
+  digitalWrite(10, LOW);
+  digitalWrite(11, LOW);
+}
+  void leftForwards(void) //This function sets IN1 = LOW and IN2 = HIGH in order to set the direction to forwards for motor 1
+{
+  digitalWrite(8,LOW); //IN1
+  digitalWrite(9,HIGH); //IN2
+}
+void leftBackwards(void) //This function sets IN1 = HIGH and IN2 = LOW in order to set the direction to backwards for motor 1
+{
+  digitalWrite(8,HIGH); //IN1
+  digitalWrite(9,LOW); //IN2
+}
+void rightForwards(void)  //This function sets IN3 = LOW and IN4 = HIGH in order to set the direction to forwards for motor 2
+{
+  digitalWrite(10,LOW); //IN3
+  digitalWrite(11,HIGH); //IN4
+}
+void rightBackwards(void) //This function sets IN3 = HIGH and IN4 = LOW in order to set the direction to forwards for motor 2
+{
+  digitalWrite(10,HIGH); //IN3
+  digitalWrite(11,LOW); //IN4
+}
+void allForwards(void)  //This function sets IN3 = LOW and IN4 = HIGH in order to set the direction to forwards for motor 2
+{
+  digitalWrite(10,LOW); //IN3
+  digitalWrite(11,HIGH); //IN4
+  digitalWrite(8,LOW); //IN1
+  digitalWrite(9,HIGH); //IN2
+}
+void allBackwards(void)  //This function sets IN3 = LOW and IN4 = HIGH in order to set the direction to forwards for motor 2
+{
+  digitalWrite(10,HIGH); //IN3
+  digitalWrite(11,LOW); //IN4
+  digitalWrite(8,HIGH); //IN1
+  digitalWrite(9,LOW); //IN2
+}
+unsigned int sonar_mm(void){
+long duration = 0;
+const float speed_sound = 340.29;// m/s, "const" makes the compiler able to optimise
+//... the program where this variable is used, cool!
+// Read in a distance from the ultrasonic distance sensor:
+// The ultrasonic burst is triggered by a HIGH pulse of 10 microseconds.
+digitalWrite(TRIG, HIGH);
+delayMicroseconds(10);
+digitalWrite(TRIG, LOW);
+//read length of time pulse
+duration = pulseIn(ECHO, HIGH); //This function measures a pulsewidth and returns
+//...the width in microseconds
+// convert the time into a distance
+// the code "(unsigned int)" turns the result of the distance calculation
+// into an integer instead of a floating point (decimal or fractional) number.
+return (unsigned int)(0.5 * duration * 1e-6 * speed_sound * 1e3);
+//"unsigned" ensures we are returning an unsigned number, remember that there is no
+//...such thing as negative distance.
+}
